@@ -14,8 +14,11 @@ class RemoveCapitaineFromUsersTable extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('capitaine');
+            if (Schema::hasColumn('users', 'capitaine')) {
+                $table->dropColumn('capitaine');
+            }
         });
+        
     }
 
     /**
