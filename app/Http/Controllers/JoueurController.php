@@ -1,13 +1,14 @@
 <?php
 
 namespace App\Http\Controllers;
+use Illuminate\Support\Facades\Log;
 
 use App\Models\Joueur;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
-use Tymon\JWTAuth\Facades\JWTAuth; // For handling JWT tokens
-
+use Illuminate\Support\Facades\Auth;
+use Tymon\JWTAuth\Facades\JWTAuth;
 class JoueurController extends Controller
 {
     // Handle player registration
@@ -54,43 +55,46 @@ class JoueurController extends Controller
         ], 201);
     }
 
-    // Handle player login
     public function login(Request $request)
-{
-    // Validate the incoming request
-    $validator = Validator::make($request->all(), [
-        'email' => 'required|email',
-        'password' => 'required|min:6',
-    ]);
-
-    if ($validator->fails()) {
-        return response()->json(['error' => $validator->errors()], 400);
+    {
+        try {
+            // Validate the request data
+            $request->validate([
+                'email' => 'required|email',
+                'password' => 'required|min:8|max:12',
+            ]);
+        
+            // Find the user by email
+            $joueur = Joueur::where('email', $request->email)->first();
+        
+            // Check if the user exists
+            if (!$joueur) {
+                return response()->json(['error' => 'Invalid email address'], 401);
+            }
+        
+            // Check if the provided password matches the hashed password in the database
+            if (!Hash::check($request->password, $joueur->password)) {
+                return response()->json(['error' => 'Incorrect password'], 401);
+            }
+        
+            // Generate a JWT token for the user
+            $token = JWTAuth::fromUser($joueur);
+        
+            // Return a successful login response with the token and user data (excluding sensitive fields)
+            return response()->json([
+                'message' => 'Login successful',
+                'token' => $token,
+                'user' => $joueur->makeHidden(['password', 'created_at', 'updated_at']),  // Hide sensitive fields
+            ], 200);
+        } catch (\Exception $e) {
+            // Catch and log any error that occurs during the process
+            Log::error('Login error: ' . $e->getMessage());
+            return response()->json(['error' => 'Something went wrong. Please try again.'], 500);
+        }
     }
+    
+    
+    
 
-    // Attempt to find the joueur by email
-    $joueur = Joueur::where('email', $request->email)->first();
-
-    // If the joueur doesn't exist or the password is incorrect, return an error
-    if (!$joueur) {
-        return response()->json(['error' => 'Email not found'], 401);
-    }
-
-    if (!Hash::check($request->password, $joueur->password)) {
-        return response()->json(['error' => 'Incorrect password'], 401);
-    }
-
-    // Create a token for the authenticated joueur
-    try {
-        $token = JWTAuth::fromUser($joueur);
-    } catch (\Exception $e) {
-        return response()->json(['error' => 'Could not create token'], 500);
-    }
-
-    // Return the token in the response
-    return response()->json([
-        'token' => $token,
-        'joueur' => $joueur
-    ]);
-}
 
 }
