@@ -25,13 +25,11 @@ class Joueur extends Model implements JWTSubject // Implement the JWTSubject int
         'password',
     ];
 
-    // Optionally, you can hash the password field automatically when setting it
-    protected static function booted()
-    {
-        static::creating(function ($joueur) {
-            $joueur->password = bcrypt($joueur->password); // Hash the password before saving
-        });
-    }
+    protected $hidden = [
+        'password',  // Hide the password field
+        'created_at', // Hide created_at timestamp
+        'updated_at', // Hide updated_at timestamp
+    ];
 
     /**
      * Get the identifier that will be stored in the JWT.

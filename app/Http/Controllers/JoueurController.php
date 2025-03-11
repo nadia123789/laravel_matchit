@@ -61,7 +61,7 @@ class JoueurController extends Controller
             // Validate the request data
             $request->validate([
                 'email' => 'required|email',
-                'password' => 'required|min:8|max:12',
+                'password' => 'required|string|min:6',  // Adjust this to be consistent with registration validation
             ]);
         
             // Find the user by email
@@ -79,7 +79,8 @@ class JoueurController extends Controller
         
             // Generate a JWT token for the user
             $token = JWTAuth::fromUser($joueur);
-        
+            Log::info('JWT Token: ' . $token);
+
             // Return a successful login response with the token and user data (excluding sensitive fields)
             return response()->json([
                 'message' => 'Login successful',
@@ -94,7 +95,28 @@ class JoueurController extends Controller
     }
     
     
-    
+    public function getAuthenticatedUser(Request $request)
+{
+    try {
+        // Get the authenticated user
+        $user = Auth::user();
+        
+        // If no user is authenticated, return an error
+        if (!$user) {
+            return response()->json(['error' => 'User not authenticated'], 401);
+        }
+
+        // Return the authenticated user's data (excluding sensitive fields like password)
+        return response()->json([
+            'user' => $user->makeHidden(['password', 'created_at', 'updated_at']),
+        ], 200);
+    } catch (\Exception $e) {
+        // Catch and log any error that occurs
+        Log::error('Error fetching authenticated user: ' . $e->getMessage());
+        return response()->json(['error' => 'Something went wrong'], 500);
+    }
+}
+
 
 
 }
