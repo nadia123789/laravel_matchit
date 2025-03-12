@@ -55,68 +55,11 @@ class JoueurController extends Controller
         ], 201);
     }
 
-    public function login(Request $request)
-    {
-        try {
-            // Validate the request data
-            $request->validate([
-                'email' => 'required|email',
-                'password' => 'required|string|min:6',  // Adjust this to be consistent with registration validation
-            ]);
-        
-            // Find the user by email
-            $joueur = Joueur::where('email', $request->email)->first();
-        
-            // Check if the user exists
-            if (!$joueur) {
-                return response()->json(['error' => 'Invalid email address'], 401);
-            }
-        
-            // Check if the provided password matches the hashed password in the database
-            if (!Hash::check($request->password, $joueur->password)) {
-                return response()->json(['error' => 'Incorrect password'], 401);
-            }
-        
-            // Generate a JWT token for the user
-            $token = JWTAuth::fromUser($joueur);
-            Log::info('JWT Token: ' . $token);
-
-            // Return a successful login response with the token and user data (excluding sensitive fields)
-            return response()->json([
-                'message' => 'Login successful',
-                'token' => $token,
-                'user' => $joueur->makeHidden(['password', 'created_at', 'updated_at']),  // Hide sensitive fields
-            ], 200);
-        } catch (\Exception $e) {
-            // Catch and log any error that occurs during the process
-            Log::error('Login error: ' . $e->getMessage());
-            return response()->json(['error' => 'Something went wrong. Please try again.'], 500);
-        }
-    }
-    
-    
-    public function getAuthenticatedUser(Request $request)
-{
-    try {
-        // Get the authenticated user
-        $user = Auth::user();
-        
-        // If no user is authenticated, return an error
-        if (!$user) {
-            return response()->json(['error' => 'User not authenticated'], 401);
-        }
-
-        // Return the authenticated user's data (excluding sensitive fields like password)
-        return response()->json([
-            'user' => $user->makeHidden(['password', 'created_at', 'updated_at']),
-        ], 200);
-    } catch (\Exception $e) {
-        // Catch and log any error that occurs
-        Log::error('Error fetching authenticated user: ' . $e->getMessage());
-        return response()->json(['error' => 'Something went wrong'], 500);
-    }
+   
+ 
+   
 }
 
 
 
-}
+
